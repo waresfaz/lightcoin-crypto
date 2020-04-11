@@ -2,12 +2,23 @@ class Account {
 
   constructor(username) {
     this.username = username;
-    this.balance = 0;
+    this.transactions = [];
+  }
+
+  get balance() {
+    let balance = 0;
+    for (let i of this.transactions) {
+      balance += i.value;
+    }
+    return balance;
+  }
+
+  addTransaction(transaction) {
+    this.transactions.push(transaction);
   }
 
 }
 
-// let balance = 500.00;
 
 class Transaction {
 
@@ -17,7 +28,10 @@ class Transaction {
   }
 
   commit() {
-    this.account.balance += this.value;
+    if (!this.isAllowed()) return false;
+    this.time = new Date();
+    this.account.addTransaction(this);
+    return true;
   }
 
 }
@@ -28,12 +42,21 @@ class Withdrawal extends Transaction {
     return -this.amount;
   }
 
+  isAllowed() {
+    // has access to this.account b/c of parent
+    return (this.account.balance - this.amount >= 0);
+  }
+
 }
 
 class Deposit extends Transaction {
 
   get value() {
     return this.amount;
+  }
+
+  isAllowed() {
+    return true;
   }
 
 }
@@ -46,18 +69,19 @@ const myAccount = new Account("snow-patrol");
 
 console.log('Starting Balance:', myAccount.balance);
 
-const t1 = new Deposit(120.00, myAccount);
-t1.commit();
-// console.log('Transaction 1:', t1)
-
-// const t2 = new Withdrawal(9.99, myAccount);
-// t2.commit();
-// // console.log('Transaction 2:', t2);
-
-const t3 = new Withdrawal(50.25, myAccount);
-t3.commit();
-// console.log('Transaction 1:', t3);
-
-console.log('Ending Balance:', myAccount.balance);
-
-// console.log('Balance:', balance);
+console.log('Attempting to withdraw even $1 should fail...');
+const t1 = new Withdrawal(1.00, myAccount);
+console.log('Commit result:', t1.commit());
+console.log('Account Balance: ', myAccount.balance);
+console.log('-----------------');
+console.log('Depositing should succeed...');
+const t2 = new Deposit(10.00, myAccount);
+console.log('Commit result:', t2.commit());
+console.log('Account Balance: ', myAccount.balance);
+// console.log('-----------------');
+// console.log('Withdrawal for 9.99 should be allowed...');
+// const t3 = new Withdrawal(9.99, myAccount);
+// console.log('Commit result:', t3.commit());
+// console.log('Account Balance: ', myAccount.balance);
+// console.log('-----------------');
+// console.log('Account Transaction History: ', myAccount.transactions);
